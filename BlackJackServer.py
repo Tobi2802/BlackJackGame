@@ -4,7 +4,7 @@
 import socket #Für die Client Server verbindung
 import time #Für senden der Nachrichten da zur verarbeitung der empfangenen Nachricten eine gewisse Zeit benötigt wird
 import threading #Für mehrere Clients
-import random
+import random #Zum shufflen des Decks
 #Listen für Anzahl der Clients und wie viele Bereit sind sowie für das senden an alle Clients
 client_list=[]
 client_ready=[]
@@ -13,60 +13,60 @@ client_ready=[]
 lock= threading.Lock()
 alle_bereit=threading.Event()
 #classes
-class Player:
-    def __init__(self, name, kontostand=100):
-        self.name=name
-        self.kontostand=kontostand
-        self.karten = []
-    def begruessung(self):
+class Player: #Player Klasse
+    def __init__(self, name, kontostand=100): #Initalisierung des Players
+        self.name=name #Name des Players
+        self.kontostand=kontostand #Kontostand des Players
+        self.karten = [] #Hand des Players
+    def begruessung(self): #Begrüsung des Spielers
         return f"Hallo {self.name}"
-    def guthaben_info(self):
+    def guthaben_info(self): #Gibt dem Spiler die Information wie viel Guthaben er hat
         return f"{self.name} dein Guthaben beträgt {self.kontostand}"
-    def einsatz(self, betrag):
-        if betrag > self.kontostand:
-            return False, f"{self.name} du hast zu wenig Guthaben, dein Guthaben beträgt nur {self.kontostand}" 
+    def einsatz(self, betrag): #Funktion die überprüft ob die Menge die der Player setztn möchte möglich ist
+        if betrag > self.kontostand: #Bedingung wenn der Player mehr setzten möchte als er hat
+            return False, f"{self.name} du hast zu wenig Guthaben, dein Guthaben beträgt nur {self.kontostand}" # False startet die im Programm weiter unten stehende while-Schleife neu um die Frage erneut zu senden wie viel de Player setzen möchte
         else:
-            self.kontostand -= betrag
-            return True, f"{self.name} dein neuer Kontostand ist {self.kontostand}"
-    def karten_zeigen(self):
-        return [karte.__karte__() for karte in self.karten]
-    def handwert_berechnen(self):
-        wert=0
-        asse=0
+            self.kontostand -= betrag #Bedingung wenn es möglich ist den Betrag zu setzen
+            return True, f"{self.name} dein neuer Kontostand ist {self.kontostand}" #Ture lässt die im Programm weiter unten stehende while-Schleife weiter laufen
+    def karten_zeigen(self): #Gibt die Karten des Players aus
+        return [karte.karte() for karte in self.karten]
+    def handwert_berechnen(self):#Hier wird der Wert der Hand berechnet
+        wert=0 #Wert der Hand
+        asse=0 #Anzahl der Asse
         for karte in self.karten:
-            if karte.wert in ["Bube","Dame","König"]:
+            if karte.wert in ["Bube","Dame","König"]: #Bedingung wenn eine dieser Karten auf der Hand ist bekommt sie den Wert 10
                 wert+=10
-            elif karte.wert == "Ass":
+            elif karte.wert == "Ass": #Bedingung wenn eine der Karten auf der Hand ein Ass ist 
                 asse +=1
                 wert+=11
-            else:
+            else: #bedingung wenn eine andere Karte auf der Hand ist wird der String der den Wert der Karte beinhaltet in ein Integer umgewandelt
                 wert+=int(karte.wert)
-        while wert > 21 and asse:
+        while wert > 21 and asse: #Überprüft ob die Hand einen Wert über 21 hat und ein Ass auf der Hand ist wenn dies der Fall ist zählt das Ass nur 1
             wert-=10
             asse-=1
-        return wert
-class Dealer:
-    def __init__(self,kontostanddealer=0):
-        self.kontostanddealer=kontostanddealer
-        self.deck=None
-        self.clients=[]
-    def kontostand(self):
+        return wert #Wert wird wieder zurück gegeben
+class Dealer: #Dealer Klasse
+    def __init__(self,kontostanddealer=0): #Initialisierung des Dealers
+        self.kontostanddealer=kontostanddealer #Kontostand des Dealers
+        self.deck=None #Leeres Deck des Dealers wird im weiteren Verlauf zugewiesen
+        self.clients=[] #Liste der Clients
+    def kontostand(self): #Funktion zum ausgeben des Kontostandes des Dealers
         return f"Dealer hat {self.kontostanddealer}"
-    def deck_erhalten(self,deck):
+    def deck_erhalten(self,deck): #Funktion in dem der Dealer sein Deck bekommt
         self.deck=deck
-    def clients_hinzufügen(self,client):
+    def clients_hinzufügen(self,client): #Funktion mit der die Clients der Cientliste hinzugefügt werden
         self.clients.append(client)
-    def karten_austeilen(self):
-        self.karten=[self.deck.deck.pop() for _ in range(2)]
+    def karten_austeilen(self): #Funktion die den Spielern und dem Dealern die Karten austeilt
+        self.karten=[self.deck.deck.pop() for _ in range(2)] #Karten des Dealers
         for client in self.clients:
-            client.karten=[self.deck.deck.pop() for _ in range(2)]
-    def erste_karte_dealer(self):
-        return self.karten[0].__karte__()
-    def deck(self):
-        return [karte.__karte__ for karte in self.deck.deck]
-    def karte_ziehen(self,player):
+            client.karten=[self.deck.deck.pop() for _ in range(2)] #Karten werden der jeweiligen Clients
+    def erste_karte_dealer(self): #Funktion welche die erste Karte des Dealers ausgibt
+        return self.karten[0].karte() 
+    def deck(self): #Funktion um das Deck zu verwenden
+        return [karte.karte for karte in self.deck.deck]
+    def karte_ziehen(self,player): #Funktion die eine Karte zum Dealer oder Playerdeck hinzufügt player dient hier nur als platzhalter
         player.karten.append(self.deck.deck.pop())
-    def berechne_handwert(self):
+    def berechne_handwert(self): #Funktionsweise wie bei der Berechnung des Handwertes des Players
         wert=0
         asse=0
         for karte in self.karten:
@@ -81,29 +81,31 @@ class Dealer:
             wert-=10
             asse-=1
         return wert
-class Karte:
-    def __init__(self,zeichen,wert):
-        self.zeichen=zeichen
-        self.wert=wert
-    def __karte__(self):
-        return f"{self.zeichen} von {self.wert}"
-class Deck:
-    def __init__(self):
-        self.zeichen=["Herz","Karo","Pick","Kreuz"]
-        self.wert=["2","3","4","5","6","7","8","9","10","Bube","Dame","König","Ass"]
-        self.deck=[Karte(zeichen,wert) for zeichen in self.zeichen for wert in self.wert]
-        random.shuffle(self.deck)
-    def kartendeck(self):
-        return [karte.__karte__() for karte in self.deck]
+    def karten_zeigen(self): #Gibt die Karten des Dealers aus
+        return [karte.karte() for karte in self.karten]
+class Karte: #Karten Klasse
+    def __init__(self,zeichen,wert): #Karte wird Initialisiert
+        self.zeichen=zeichen #Der Karte wird ein Zeichen übergeben
+        self.wert=wert #Der Karte wird ein Wert übergeben
+    def karte(self): #Funktion zur ausgabe der Karte
+        return f"{self.zeichen}{self.wert}"
+class Deck: #Deck Klasse
+    def __init__(self): #Deck wird initialisiert
+        self.zeichen=["Herz","Karo","Pick","Kreuz"] #Liste der Zeichen der Karten
+        self.wert=["2","3","4","5","6","7","8","9","10","Bube","Dame","König","Ass"] #Liste der Werte der Karten
+        self.deck=[Karte(zeichen,wert) for zeichen in self.zeichen for wert in self.wert] #Deck wird zusammengestellt
+        random.shuffle(self.deck) #Deck wird gemischelt
+    #def kartendeck(self):
+        #return [karte.karte() for karte in self.deck]
 
-#Funktion für Threads
+#Funktion für Threads für die Clients
 def thread_funktion(conn,address):
-    print(f"Verbindung von {address}")
+    print(f"Verbindung von {address}") #Gibt aus 
     #Nachrichten an Client senden
     willkommens_message="Willkommen bei BlackJack"
     conn.send(willkommens_message.encode('utf-8'))
     time.sleep(1)
-    bereit_message="Bitte bereit gehen"
+    bereit_message="Sind Sie bereit?"
     conn.send(bereit_message.encode('utf-8'))
     time.sleep(1)
     b_message=conn.recv(1024).decode('utf-8')
@@ -146,7 +148,7 @@ def thread_funktion(conn,address):
         time.sleep(1)
         client_karten_message=f"{p1.name} deine Karten {p1.karten_zeigen()}"
         conn.send(client_karten_message.encode("utf-8"))
-        print("Client Karten",p1.karten_zeigen())
+        #print("Client Karten",p1.karten_zeigen())
         time.sleep(1)
         hand_wert_message=f"{p1.name}, der Wert deiner Hand beträgt {p1.handwert_berechnen()}"
         conn.send(hand_wert_message.encode("utf-8"))
@@ -155,7 +157,7 @@ def thread_funktion(conn,address):
             if handwert == 21:
                 einsatz=int(betrag*2.5)
                 p1.kontostand+=einsatz
-                conn.send(f"{p1.name} du hast ein BlackJack du bekommst das 2.5 Fache deines einsatzes dein neuer Kontostand beträgt {p1.kontostand}".encode("utf-8"))
+                conn.send(f"{p1.name} du hast ein BlackJack du bekommst das 2.5 Fache deines Einsatzes dein neuer Kontostand beträgt {p1.kontostand}".encode("utf-8"))
                 time.sleep(1)
                 break
             ziehen_oder_halten_message=f"{p1.name} möchtest du halten oder ziehen (h/z)?"
@@ -187,9 +189,12 @@ def thread_funktion(conn,address):
             elif entscheidung =="h":
                 while d1.berechne_handwert() <=17:
                     d1.karte_ziehen(d1)
-                dealer_karten_message=f"Zweite Karte des Dealers {d1.karten[1].__karte__()}"
+                dealer_karten_message=f"Zweite Karte des Dealers {d1.karten[1].karte()}"
                 conn.send(dealer_karten_message.encode("utf-8"))
                 dealer_handwert=d1.berechne_handwert()
+                delaer_karten=d1.karten_zeigen()
+                dealer_karten_message=f"Die Karten des Dealers sind {delaer_karten}\n"
+                conn.send(dealer_karten_message.encode("utf-8"))
                 dealer_handwert_message=f"Die Hand des Dealers hat einen Wert von {dealer_handwert} \n"
                 conn.send(dealer_handwert_message.encode("utf-8"))
                 handwert=p1.handwert_berechnen()
@@ -228,7 +233,7 @@ def thread_funktion(conn,address):
                 d1.karten.clear()
                 break
             elif antwort == "n":
-                conn.senden("Verbindung wird geschlossen".encode("utf-8"))
+                conn.send("Verbindung wird geschlossen".encode("utf-8"))
                 conn.close()
                 return
             else:

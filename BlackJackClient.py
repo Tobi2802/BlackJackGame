@@ -23,7 +23,7 @@ def client_program():
 
     # Nachricht, dass Client bereit ist
     while True:
-        message = input("Drücken Sie b für Bereit: ")
+        message = input("dann drücken Sie b für Bereit: ")
         if message == "b":
             sende_nachricht(message)
             break
