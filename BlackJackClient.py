@@ -4,16 +4,18 @@ import time
 # Client Programm
 def client_program():
     # IP des Servers und Port für Verbindung
-    host = '127.0.0.1'
+    host = '10.100.100.100'
     port = 50002
 
     # Socket erstellen
     cs = socket.socket()
     cs.connect((host, port))
 
+    # Funktion für Nachrichten empfangen
     def empfange_nachricht():
         return cs.recv(1024).decode('utf-8')
 
+    # Funktion für Nachrichten senden
     def sende_nachricht(nachricht):
         cs.send(nachricht.encode('utf-8'))
     
@@ -38,15 +40,15 @@ def client_program():
     while True:
         message_recv = cs.recv(1024).decode('utf-8')
         print(message_recv)  # Kontostand vor dem Setzen
-        if "Guthaben beträgt 0" in message_recv:
-            print ("Sie sind ein armer Schlucker mit keinem Geld, sowas brauchen wir hier nicht")
-            cs.close()
+        if "Guthaben beträgt 0" in message_recv:#Bedingung wenn das Guthaben des Spielers 0 beträgt
+            print ("Sie sind pleite Sie müssen leider gehen")#Informiert den Spieler, dass er kein Geld mehr hat
+            cs.close()#Connection wird geschlossen
             return
         while True:
-            message = input("Wie viel wollen Sie setzen?: ")
-            if message.isdigit():
-                betrag = int(message)
-                if betrag >= 1:
+            message = input("Wie viel wollen Sie setzen?: ") #Fragt wie viel der Spieler setzen möchte
+            if message.isdigit():#Bedingung wenn die Eingabe eine Zahl ist
+                betrag = int(message) #Wandelt den String in ein Integer um
+                if betrag >= 1: #Bedingung, dass man mindestens 1 setzten muss
                     cs.send(message.encode('utf-8'))
                     message_recv = cs.recv(1024).decode('utf-8')
                     print(message_recv)  # Kontostand nach dem Setzen
@@ -91,7 +93,7 @@ def client_program():
             cs.send(antwort.encode('utf-8'))
     
             if antwort == 'n':
-                print("Hier haben Sie ihr Geld. Das haben Sie nötig. Auf Wiedersehen!")
+                print("Vielen Dank fürs Spielen, aufwiedersehen")
                 cs.close()
                 return # braucht man damit es schließt
             break # um wieder mit dem setzen zu beginnen
