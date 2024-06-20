@@ -212,7 +212,8 @@ def thread_funktion(conn,address):
                     time.sleep(1)
                     break
                 else:
-                    conn.send("Unentschieden".encode("utf-8"))#Sendet dem Spieler, dass das Spiel unendsieden ausgegangen
+                    einsatz=int(betrag)
+                    p1.kontostand+=einsatz
                     time.sleep(1)
                 break
             else:
